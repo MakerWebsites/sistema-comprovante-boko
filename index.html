@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Comprovantes - BOKÓ Confeitaria</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2canvas e html2pdf para exportação robusta -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        boko: {
+                            bg: '#121212',
+                            card: '#1c1c1e',
+                            border: '#2c2c2e',
+                            accent: '#d4a373',
+                            accentHover: '#bc6c25',
+                            textMuted: '#9ca3af'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f0f10;
+            color: #f3f4f6;
+        }
+        #comprovante-print {
+            background-color: #18181b;
+            color: #f4f4f5;
+            border: 1px solid #27272a;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+    </style>
+</head>
+<body class="min-h-full flex flex-col">
+
+    <!-- Header Principal -->
+    <header class="bg-zinc-900 border-b border-zinc-800 py-4 px-6 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shadow-lg">
+                    <i class="fa-solid fa-cake-candles text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wider text-amber-500">BOKÓ</h1>
+                    <p class="text-xs text-zinc-400">Sistema de Emissão de Comprovantes</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-800/80 px-3 py-1.5 rounded-lg border border-zinc-700/50">
+                <i class="fa-solid fa-shield-halved text-amber-500"></i>
+                <span>CNPJ: 65.147.396/0001-40</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- PAINEL DE CONTROLE (FORMULÁRIO) -->
+        <section class="lg:col-span-7 bg-zinc-900/90 rounded-2xl border border-zinc-800 p-5 sm:p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800">
+                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-500"></i> Dados da Venda
+                </h2>
+                <button type="button" onclick="resetarFormulario()" class="text-xs text-zinc-400 hover:text-amber-400 transition-colors flex items-center gap-1 bg-zinc-800 px-3 py-1.5 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-rotate-right"></i> Limpar / Novo
+                </button>
+            </div>
+
+            <form id="vendaForm" class="space-y-5" onsubmit="return false;">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Número do Pedido</label>
+                        <input type="text" id="numPedido" value="BK-0001" oninput="atualizarComprovante()" onkeyup="atualizarComprovante()" 
+                            class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Data da Compra</label>
+                        <input type="date" id="dataPedido" oninput="atualizarComprovante()" onchange="atualizarComprovante()" 
+                            class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">Nome do Cliente</label>
+                    <input type="text" id="nomeCliente" value="Cliente" placeholder="Ex: Maria Silva" oninput="atualizarComprovante()" onkeyup="atualizarComprovante()" 
+                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors">
+                </div>
+
+                <!-- Seção de Produtos -->
+                <div class="pt-2">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-xs font-semibold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                            <i class="fa-solid fa-box-open"></i> Itens do Pedido
+                        </label>
+                        <button type="button" onclick="adicionarItemProduto()" class="text-xs bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-plus"></i> Adicionar Produto
+                        </button>
+                    </div>
+
+                    <div id="listaItensContainer" class="space-y-3"></div>
+                </div>
+
+                <!-- Desconto e Pagamento -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-zinc-800">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Valor de Desconto (R$)</label>
+                        <input type="number" id="valorDesconto" value="0.00" min="0" step="0.50" oninput="atualizarComprovante()" onkeyup="atualizarComprovante()" 
+                            class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Forma de Pagamento</label>
+                        <select id="formaPagamento" oninput="atualizarComprovante()" onchange="atualizarComprovante()" 
+                            class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors">
+                            <option value="Pix">Pix</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                            <option value="Cartão de Débito">Cartão de Débito</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-950/60 rounded-xl p-3 border border-zinc-800 text-xs text-zinc-400 flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info text-amber-500 mt-0.5"></i>
+                    <div>
+                        <span class="text-zinc-200 font-medium">Fácil Personalização:</span> Cadastre novos produtos editando o array <code class="text-amber-400 bg-zinc-900 px-1 py-0.5 rounded">CATALOGO_PRODUTOS</code> no código JavaScript.
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- PAINEL DE PRÉ-VISUALIZAÇÃO E AÇÕES -->
+        <section class="lg:col-span-5 flex flex-col items-center sticky top-6">
+            <div class="w-full mb-4 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Prévia do Comprovante</h3>
+                <span class="text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Atualização Instantânea
+                </span>
+            </div>
+
+            <!-- COMPROVANTE COM CORREÇÃO DE LARGURA E TEXTOS -->
+            <div id="comprovante-print" class="w-full max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden font-sans">
+                <!-- Detalhe decorativo topo -->
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-600 via-amber-400 to-amber-700"></div>
+
+                <!-- Cabeçalho Confeitaria -->
+                <div class="text-center pb-4 border-b border-zinc-800">
+                    <h2 class="text-2xl font-bold tracking-[0.2em] text-amber-500 mb-0.5">BOKÓ</h2>
+                    <p class="text-xs font-medium tracking-[0.3em] text-zinc-400 uppercase mb-2">CONFEITARIA</p>
+                    <p class="text-[11px] font-medium tracking-wide text-zinc-300 bg-zinc-900/80 inline-block px-3 py-1 rounded-full border border-zinc-800">COMPROVANTE DE COMPRA</p>
+                    <p class="text-[11px] text-zinc-400 mt-2 font-medium">CNPJ: 65.147.396/0001-40</p>
+                </div>
+
+                <!-- Metadados do Pedido -->
+                <div class="py-3 border-b border-zinc-800 text-xs space-y-2.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-zinc-400 shrink-0">Nº do pedido</span>
+                        <span id="previewNumPedido" class="font-semibold text-zinc-200 text-right">BK-0001</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-zinc-400 shrink-0">Data</span>
+                        <span id="previewData" class="font-semibold text-zinc-200 text-right">15/10/2026</span>
+                    </div>
+                    <div class="flex justify-between items-start gap-4">
+                        <span class="text-zinc-400 shrink-0">Cliente</span>
+                        <span id="previewCliente" class="font-semibold text-zinc-200 text-right break-words max-w-[220px]">Cliente</span>
+                    </div>
+                </div>
+
+                <!-- Lista de Produtos -->
+                <div class="py-3 border-b border-zinc-800">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2.5">Produtos</h4>
+                    <div id="previewItensLista" class="space-y-2.5"></div>
+                </div>
+
+                <!-- Desconto (Condicional) -->
+                <div id="previewDescontoContainer" class="py-2.5 border-b border-zinc-800 flex justify-between items-center text-xs text-amber-400/90 hidden">
+                    <span>Desconto aplicado</span>
+                    <span id="previewValorDesconto">- R$ 0,00</span>
+                </div>
+
+                <!-- Total e Forma de Pagamento -->
+                <div class="py-3.5 space-y-2 border-b border-zinc-800">
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-sm font-bold tracking-wider text-zinc-200">TOTAL</span>
+                        <span id="previewTotal" class="text-xl font-bold text-amber-500">R$ 21,00</span>
+                    </div>
+                    <div class="text-xs text-zinc-400">
+                        Forma de pagamento: <span id="previewPagamento" class="text-zinc-200 font-medium">Pix</span>
+                    </div>
+                </div>
+
+                <!-- Rodapé Comprovante -->
+                <div class="pt-4 text-center">
+                    <p class="text-xs italic font-medium text-amber-200/90">Obrigado por escolher a BOKÓ!</p>
+                    <p class="text-[11px] text-zinc-500 mt-1">Um docinho para deixar seu dia melhor.</p>
+                </div>
+            </div>
+
+            <!-- Botões de Ação de Download -->
+            <div class="w-full max-w-md grid grid-cols-2 gap-3 mt-5">
+                <button type="button" onclick="baixarPDF()" class="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-semibold text-sm py-3 px-4 rounded-xl shadow-lg shadow-amber-900/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-file-pdf"></i> Baixar PDF
+                </button>
+                <button type="button" onclick="baixarImagem()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-sm py-3 px-4 rounded-xl border border-zinc-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-image"></i> Baixar Imagem
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Script JavaScript -->
+    <script>
+        /* 
+          CATÁLOGO DE PRODUTOS
+          Adicione ou altere facilmente produtos aqui.
+        */
+        const CATALOGO_PRODUTOS = [
+            { nome: "Brownie Fudge Cocoa", preco: 14.90 },
+            { nome: "Brownie Fudge Coconut", preco: 16.90 },
+            { nome: "Brownie Fudge Milk", preco: 19.90 },
+            { nome: "Brownie Fudge milk Nuts", preco: 21.90 }
+        ];
+
+        let itensPedido = [
+            { produtoIndex: 0, quantidade: 3 }
+        ];
+
+        window.onload = function() {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataPedido').value = hoje;
+            renderizarItensFormulario();
+            atualizarComprovante();
+        };
+
+        function formatarDataBR(dataStr) {
+            if (!dataStr) return '';
+            const partes = dataStr.split('-');
+            if (partes.length !== 3) return dataStr;
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+
+        function renderizarItensFormulario() {
+            const container = document.getElementById('listaItensContainer');
+            container.innerHTML = '';
+
+            itensPedido.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center gap-2 bg-zinc-950/80 p-3 rounded-xl border border-zinc-800';
+
+                let optionsHtml = '';
+                CATALOGO_PRODUTOS.forEach((prod, pIdx) => {
+                    const selected = pIdx === item.produtoIndex ? 'selected' : '';
+                    optionsHtml += `<option value="${pIdx}" ${selected}>${prod.nome} (R$ ${prod.preco.toFixed(2)})</option>`;
+                });
+
+                itemDiv.innerHTML = `
+                    <div class="flex-1">
+                        <label class="block text-[10px] text-zinc-400 mb-1">Produto #${index + 1}</label>
+                        <select onchange="atualizarProdutoItem(${index}, 'produtoIndex', this.value)" oninput="atualizarProdutoItem(${index}, 'produtoIndex', this.value)"
+                            class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-[10px] text-zinc-400 mb-1">Qtd</label>
+                        <input type="number" min="1" value="${item.quantidade}" oninput="atualizarProdutoItem(${index}, 'quantidade', this.value)" onkeyup="atualizarProdutoItem(${index}, 'quantidade', this.value)"
+                            class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white text-center focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="pt-4">
+                        ${itensPedido.length > 1 ? `
+                            <button type="button" onclick="removerItemProduto(${index})" class="text-zinc-500 hover:text-red-400 p-2 transition-colors cursor-pointer" title="Remover item">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        ` : `<div class="w-8"></div>`}
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function adicionarItemProduto() {
+            itensPedido.push({ produtoIndex: 0, quantidade: 1 });
+            renderizarItensFormulario();
+            atualizarComprovante();
+        }
+
+        function removerItemProduto(index) {
+            if (itensPedido.length > 1) {
+                itensPedido.splice(index, 1);
+                renderizarItensFormulario();
+                atualizarComprovante();
+            }
+        }
+
+        function atualizarProdutoItem(index, campo, valor) {
+            if (campo === 'quantidade') {
+                itensPedido[index].quantidade = parseInt(valor) || 1;
+            } else if (campo === 'produtoIndex') {
+                itensPedido[index].produtoIndex = parseInt(valor);
+            }
+            atualizarComprovante();
+        }
+
+        function atualizarComprovante() {
+            const numPedidoInput = document.getElementById('numPedido');
+            const dataPedidoInput = document.getElementById('dataPedido');
+            const nomeClienteInput = document.getElementById('nomeCliente');
+            const valorDescontoInput = document.getElementById('valorDesconto');
+            const formaPagamentoSelect = document.getElementById('formaPagamento');
+
+            const numPedido = numPedidoInput ? numPedidoInput.value : 'BK-0001';
+            const dataRaw = dataPedidoInput ? dataPedidoInput.value : '';
+            const dataFormatada = formatarDataBR(dataRaw);
+            const nomeCliente = nomeClienteInput ? nomeClienteInput.value : 'Cliente';
+            const valorDesconto = valorDescontoInput ? (parseFloat(valorDescontoInput.value) || 0) : 0;
+            const formaPagamento = formaPagamentoSelect ? formaPagamentoSelect.value : 'Pix';
+
+            const elNum = document.getElementById('previewNumPedido');
+            const elData = document.getElementById('previewData');
+            const elCliente = document.getElementById('previewCliente');
+            const elPag = document.getElementById('previewPagamento');
+
+            if (elNum) elNum.innerText = numPedido || 'BK-0001';
+            if (elData) elData.innerText = dataFormatada || '';
+            if (elCliente) elCliente.innerText = nomeCliente || 'Cliente';
+            if (elPag) elPag.innerText = formaPagamento;
+
+            let subtotalGeral = 0;
+            const previewItensLista = document.getElementById('previewItensLista');
+            if (previewItensLista) {
+                previewItensLista.innerHTML = '';
+
+                itensPedido.forEach(item => {
+                    const produtoObj = CATALOGO_PRODUTOS[item.produtoIndex] || CATALOGO_PRODUTOS[0];
+                    const qtd = parseInt(item.quantidade) || 1;
+                    const totalItem = produtoObj.preco * qtd;
+                    subtotalGeral += totalItem;
+
+                    const divItem = document.createElement('div');
+                    divItem.className = 'flex justify-between items-start text-xs gap-3';
+                    divItem.innerHTML = `
+                        <div>
+                            <p class="font-medium text-zinc-200">${produtoObj.nome}</p>
+                            <p class="text-[11px] text-zinc-400">${qtd} unidade${qtd > 1 ? 's' : ''} × R$ ${produtoObj.preco.toFixed(2).replace('.', ',')}</p>
+                        </div>
+                        <span class="font-semibold text-zinc-200 shrink-0">R$ ${totalItem.toFixed(2).replace('.', ',')}</span>
+                    `;
+                    previewItensLista.appendChild(divItem);
+                });
+            }
+
+            let totalFinal = subtotalGeral - valorDesconto;
+            if (totalFinal < 0) totalFinal = 0;
+
+            const descontoContainer = document.getElementById('previewDescontoContainer');
+            const valDescontoEl = document.getElementById('previewValorDesconto');
+            if (descontoContainer && valDescontoEl) {
+                if (valorDesconto > 0) {
+                    descontoContainer.classList.remove('hidden');
+                    valDescontoEl.innerText = `- R$ ${valorDesconto.toFixed(2).replace('.', ',')}`;
+                } else {
+                    descontoContainer.classList.add('hidden');
+                }
+            }
+
+            const totalEl = document.getElementById('previewTotal');
+            if (totalEl) {
+                totalEl.innerText = `R$ ${totalFinal.toFixed(2).replace('.', ',')}`;
+            }
+        }
+
+        function resetarFormulario() {
+            document.getElementById('numPedido').value = 'BK-0001';
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataPedido').value = hoje;
+            document.getElementById('nomeCliente').value = 'Cliente';
+            document.getElementById('valorDesconto').value = '0.00';
+            document.getElementById('formaPagamento').value = 'Pix';
+            
+            itensPedido = [{ produtoIndex: 0, quantidade: 1 }];
+            renderizarItensFormulario();
+            atualizarComprovante();
+        }
+
+        function baixarPDF() {
+            const elemento = document.getElementById('comprovante-print');
+            const numPedido = document.getElementById('numPedido').value || 'pedido';
+            
+            const opcoes = {
+                margin:       10,
+                filename:     `comprovante-${numPedido}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#18181b', logging: false },
+                jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+            };
+
+            html2pdf().from(elemento).set(opcoes).save().catch(err => {
+                console.error("Erro ao gerar PDF:", err);
+            });
+        }
+
+        function baixarImagem() {
+            const elemento = document.getElementById('comprovante-print');
+            const numPedido = document.getElementById('numPedido').value || 'pedido';
+
+            html2canvas(elemento, {
+                scale: 3,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#18181b',
+                logging: false
+            }).then(canvas => {
+                try {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = `comprovante-${numPedido}.png`;
+                    link.href = dataUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) {
+                    const janela = window.open();
+                    if (janela) {
+                        janela.document.write(`<img src="${canvas.toDataURL('image/png')}" style="max-width:100%;"/>`);
+                    }
+                }
+            }).catch(err => {
+                console.error("Erro ao gerar imagem:", err);
+            });
+        }
+    </script>
+</body>
+</html>
